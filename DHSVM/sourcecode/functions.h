@@ -419,4 +419,9 @@ void CalcGapSurroudingIntercept(OPTIONSTRUCT *Options, int HeatFluxOption,
   int y, int x, int Dt, int NVegLActual, CanopyGapStruct **Gap, VEGTABLE *VType,
   PIXRAD *LocalRad, PIXMET *LocalMet, float UpperRa, float UpperWind);
 
+void DistributeSatflow(int Dt, float DX, float DY, float SatFlow, int NSoilLayers,
+  float TotalDepth, float *RootDepth, float *Ks, float *Porosity, float *FCap,
+  float *Perc, float *PercArea, float *Adjust, float *TableDepth,
+  float *Runoff, float *Moist);
+
 #endif

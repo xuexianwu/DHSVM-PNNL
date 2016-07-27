@@ -5,18 +5,18 @@
   Total Inflow ...................            2726.381
       Precip/Inflow ..............            2774.219
       SnowVaporFlux ..............             -47.838
-  Total Outflow ..................            2792.318
-      ET .........................             752.642
-      ChannelInt .................            2039.676
+  Total Outflow ..................            2792.309
+      ET .........................             751.996
+      ChannelInt .................            2040.313
       RoadInt ....................               0.000
-  Storage Change .................             -65.965
+  Storage Change .................             -65.953
       Initial Storage ............              99.500
-      Final Storage ..............              33.535
+      Final Storage ..............              33.547
           Final SWQ ..............               0.000
-          Final Soil Moisture ....              33.476
+          Final Soil Moisture ....              33.488
           Final Surface ..........               0.059
           Final Road Surface .....               0.000
 
   Mass added to glacier ..........               0.000
   ******************************************************
-  Mass Error (mm).................              -0.028
+  Mass Error (mm).................              -0.025

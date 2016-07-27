@@ -94,6 +94,13 @@ void MassEnergyBalance(OPTIONSTRUCT *Options, int y, int x,
   float R;                  /* Radius of canopy gap */
   double weight;             /* ratio of canopy gap to the grid cell area*/
 
+  /* Edited by Zhuoran Duan zhuoran.duan@pnnl.gov 06/21/2006*/
+  /*Add a function to modify soil moisture by add/extract SatFlow from previous time step*/
+  DistributeSatflow(Dt, DX, DY, LocalSoil->SatFlow, SType->NLayers,
+    LocalSoil->Depth, VType->RootDepth, SType->Ks, SType->Porosity,
+    SType->FCap, LocalSoil->Perc, LocalNetwork->PercArea,
+    LocalNetwork->Adjust, &(LocalSoil->TableDepth),
+    &(LocalSoil->IExcess), LocalSoil->Moist);
 
   /* Calculate the number of vegetation layers above the snow.
   Note that veg cells with gap must have both over- and under-story as stipulated
@@ -126,14 +133,6 @@ void MassEnergyBalance(OPTIONSTRUCT *Options, int y, int x,
   LocalEvap->ETot = 0.0;
   LocalVeg->MeltEnergy = 0.0;
   LocalVeg->MoistureFlux = 0.0;
-
-  /* Edited by Zhuoran Duan zhuoran.duan@pnnl.gov 06/21/2006*/
-  /*Add a function to modify soil moisture by add/extract SatFlow from previous time step*/
-  /*DistributeSatflow(Dt, DX, DY, LocalSoil->SatFlow, SType->NLayers,
-    LocalSoil->Depth, VType->RootDepth, SType->Ks, SType->Porosity,
-    SType->FCap, LocalSoil->Perc, LocalNetwork->PercArea,
-    LocalNetwork->Adjust, &(LocalSoil->TableDepth),
-    &(LocalSoil->IExcess), LocalSoil->Moist);*/
 
   /* calculate the radiation balance for pixels */
   RadiationBalance(Options, HeatFluxOption, CanopyRadAttOption,

@@ -48,8 +48,6 @@ void CanopyGapRadiation(CanopyGapStruct **Gap, float SunAngle, float Rs,
   float Rsb, float Rsd, float Ld, float TSurf, float Tcanopy, float SoilAlbedo,
   VEGTABLE *VType, SNOWPIX *LocalSnow, PIXRAD *LocalRad)
 {
-  int i;
-
   /* ==== OPENING PORTION (no overstory if gap presents) ====*/
   (*Gap)[Opening].OverStory = FALSE;
   (*Gap)[Opening].UnderStory = VType->UnderStory;

@@ -36,9 +36,6 @@ void CanopyGapInterception(OPTIONSTRUCT *Options, CanopyGapStruct **Gap,
   SOILPIX *LocalSoil, VEGPIX *LocalVeg, SNOWPIX *LocalSnow,
   PRECIPPIX *LocalPrecip, PIXRAD *LocalRad, PIXMET *LocalMet) {
 
-  int i;
-
-
   if ((*Gap)[Opening].UnderStory == TRUE) {
     (*Gap)[Opening].Tcanopy = LocalMet->Tair;
     (*Gap)[Opening].CanopyVaporMassFlux = 0.0;
