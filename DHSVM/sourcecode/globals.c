@@ -33,3 +33,5 @@ float ALB_ACC_LAMBDA;   /* snow freeze albedo cruve control parameters */
 float ALB_MELT_LAMBDA;  /* snow thaw albedo cruve control parameters */
 float ALB_ACC_MIN;
 float ALB_MELT_MIN;
+
+int GRID_DECIMAL;       /* Number of digits after decimal point in forcing file names */

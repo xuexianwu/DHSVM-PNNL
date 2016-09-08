@@ -73,6 +73,7 @@ void InitConstants(LISTPTR Input, OPTIONSTRUCT *Options, MAPSIZE *Map,
     {"OPTIONS", "QPF", "", ""},
     {"OPTIONS", "PRISM", "", ""},
     {"OPTIONS", "GRIDDED MET DATA", "", "" },
+    {"OPTIONS", "GRID_DECIMAL", "", "" },
     {"OPTIONS", "CANOPY RADIATION ATTENUATION MODE", "", ""},
     {"OPTIONS", "SHADING", "", ""},
     {"OPTIONS", "SNOTEL", "", ""},
@@ -245,10 +246,15 @@ void InitConstants(LISTPTR Input, OPTIONSTRUCT *Options, MAPSIZE *Map,
     ReportError(StrEnv[prism].KeyName, 51);
 
   /* Determine whether gridded met forcing should be used */
-  if (strncmp(StrEnv[grid].VarStr, "TRUE", 4) == 0)
+  if (strncmp(StrEnv[grid].VarStr, "TRUE", 4) == 0) {
     Options->GRIDMET = TRUE;
-  else if (strncmp(StrEnv[grid].VarStr, "FALSE", 5) == 0)
+    if (!CopyInt(&GRID_DECIMAL, StrEnv[decimal].VarStr, 1))
+      ReportError(StrEnv[decimal].KeyName, 51);
+  }
+  else if (strncmp(StrEnv[grid].VarStr, "FALSE", 5) == 0) {
     Options->GRIDMET = FALSE;
+    GRID_DECIMAL = NA;
+  }
   else
     ReportError(StrEnv[grid].KeyName, 51);
 

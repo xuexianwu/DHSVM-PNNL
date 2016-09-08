@@ -170,7 +170,6 @@ int main(int argc, char **argv)
   /* the following piece of code is for the UW PRISM project */
   /* for real-time verification of SWE at Snotel sites */
   /* Other users, set OPTION.SNOTEL to FALSE, or use TRUE with caution */
-
   if (Options.Snotel == TRUE && Options.Outside == FALSE) {
     printf
       ("Warning: All met stations locations are being set to the vegetation class GLACIER\n");

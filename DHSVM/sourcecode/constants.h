@@ -83,4 +83,6 @@ extern float ALB_MELT_LAMBDA;           /* snow thaw albedo cruve control parame
 extern float ALB_ACC_MIN;
 extern float ALB_MELT_MIN;
 
+extern int GRID_DECIMAL;               /* Number of digits after decimal point in forcing file names */
+
 #endif

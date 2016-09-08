@@ -515,7 +515,7 @@ void DumpMap(MAPSIZE *Map, DATE *Current, MAPDUMP *DMap, TOPOPIX **TopoMap,
       ReportError(VarIDStr, 66);
     break;
 
-  /* incoming shortwave radiation with no shading adjustment */
+    /* incoming shortwave radiation with no shading adjustment */
   case 301:
     if (DMap->Resolution == MAP_OUTPUT) {
       for (y = 0; y < Map->NY; y++) {
@@ -536,7 +536,7 @@ void DumpMap(MAPSIZE *Map, DATE *Current, MAPDUMP *DMap, TOPOPIX **TopoMap,
       ReportError(VarIDStr, 66);
     break;
 
-  /* net shortwave radiatoin received by the entire pixel*/
+    /* net shortwave radiatoin received by the entire pixel*/
   case 302:
     if (DMap->Resolution == MAP_OUTPUT) {
       for (y = 0; y < Map->NY; y++)
@@ -557,13 +557,13 @@ void DumpMap(MAPSIZE *Map, DATE *Current, MAPDUMP *DMap, TOPOPIX **TopoMap,
     else
       ReportError(VarIDStr, 66);
     break;
-  
-  /* Net radiation (shortwave+longwave) received by the entire pixel*/
+
+    /* Net radiation (shortwave+longwave) received by the entire pixel*/
   case 303:
     if (DMap->Resolution == MAP_OUTPUT) {
       for (y = 0; y < Map->NY; y++)
         for (x = 0; x < Map->NX; x++)
-          ((float *)Array)[y * Map->NX + x] = RadMap[y][x].NetRadiation[0]+RadMap[y][x].NetRadiation[1];
+          ((float *)Array)[y * Map->NX + x] = RadMap[y][x].NetRadiation[0] + RadMap[y][x].NetRadiation[1];
       Write2DMatrix(DMap->FileName, Array, DMap->NumberType, Map->NY, Map->NX,
         DMap, Index);
     }
@@ -1078,8 +1078,8 @@ void DumpMap(MAPSIZE *Map, DATE *Current, MAPDUMP *DMap, TOPOPIX **TopoMap,
 DumpPix()
 *****************************************************************************/
 void DumpPix(DATE *Current, int first, FILES *OutFile, EVAPPIX *Evap,
-   PRECIPPIX *Precip, PIXRAD *Rad, SNOWPIX *Snow, SOILPIX *Soil, int NSoil,
-   int NCanopyStory, OPTIONSTRUCT *Options)
+  PRECIPPIX *Precip, PIXRAD *Rad, SNOWPIX *Snow, SOILPIX *Soil, int NSoil,
+  int NCanopyStory, OPTIONSTRUCT *Options)
 {
   int i, j;			/* counter */
 
@@ -1094,9 +1094,9 @@ void DumpPix(DATE *Current, int first, FILES *OutFile, EVAPPIX *Evap,
     fprintf(OutFile->FilePtr, "PackWater TPack ");
 
     fprintf(OutFile->FilePtr, " TotalET ");   /*total evapotranspiration*/
-    for (i = 0; i < NCanopyStory+1; i++)
+    for (i = 0; i < NCanopyStory + 1; i++)
       fprintf(OutFile->FilePtr, " PotTransp.Story%d ", i); /* potential transpiration */
-    for (i = 0; i < NCanopyStory+1; i++)
+    for (i = 0; i < NCanopyStory + 1; i++)
       fprintf(OutFile->FilePtr, " ActTransp.Story%d ", i); /* Actual transpiration */
     for (i = 0; i < NCanopyStory; i++)
       fprintf(OutFile->FilePtr, "  EvapCanopyInt.Story%d ", i);
@@ -1149,9 +1149,9 @@ void DumpPix(DATE *Current, int first, FILES *OutFile, EVAPPIX *Evap,
 
   fprintf(OutFile->FilePtr, " %g", Evap->ETot);
 
-  for (i = 0; i < NCanopyStory+1; i++)
+  for (i = 0; i < NCanopyStory + 1; i++)
     fprintf(OutFile->FilePtr, " %g", Evap->EPot[i]);           /* Potential transpiration */
-  for (i = 0; i < NCanopyStory+1; i++)
+  for (i = 0; i < NCanopyStory + 1; i++)
     fprintf(OutFile->FilePtr, " %g", Evap->EAct[i]);           /* Actual transpiration */
   for (i = 0; i < NCanopyStory; i++)
     fprintf(OutFile->FilePtr, " %g", Evap->EInt[i]);

@@ -113,7 +113,7 @@ enum CanopyType {
 enum KEYS {
 /* Options *//* list order must match order in InitConstants.c */
   format = 0, extent, gradient, flow_routing, sensible_heat_flux,
-  infiltration, interpolation, mm5, qpf, prism, grid, canopy_radatt, 
+  infiltration, interpolation, mm5, qpf, prism, grid, decimal, canopy_radatt,
   shading, snotel, outside, rhoverride, precipitation_source, wind_source, 
   temp_lapse, precip_lapse, cressman_radius, cressman_stations, prism_data_path, 
   prism_data_ext, shading_data_path, shading_data_ext, 
