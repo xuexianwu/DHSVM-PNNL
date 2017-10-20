@@ -49,8 +49,7 @@
    Comments     :
  *****************************************************************************/
 void CalcWeights(METLOCATION * Station, int NStats, int NX, int NY,
-  uchar ** BasinMask, uchar **** WeightArray,
-  OPTIONSTRUCT * Options)
+  uchar ** BasinMask, uchar **** WeightArray, OPTIONSTRUCT * Options)
 {
   double *Weights;		/* Array with weights for all stations */
   double *Distance;		/* Array with distances to all stations */

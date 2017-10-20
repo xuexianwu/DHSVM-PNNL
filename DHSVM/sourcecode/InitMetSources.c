@@ -32,6 +32,7 @@
 #include "constants.h"
 #include "rad.h"
 
+
  /*******************************************************************************
    Function name: InitMetSources()
 
@@ -235,7 +236,7 @@ void InitGridMet(OPTIONSTRUCT *Options, LISTPTR Input, MAPSIZE *Map,
   char tempfilename[BUFSIZE + 1];
   FILE *PrismStatFile;
   char junk1[BUFSIZE + 1], junk2[BUFSIZE + 1];
-
+  
   STRINIENTRY StrEnv[] = {
     { "METEOROLOGY", "GRID ROWS", "", "" },
     { "METEOROLOGY", "GRID COLS", "", "" },

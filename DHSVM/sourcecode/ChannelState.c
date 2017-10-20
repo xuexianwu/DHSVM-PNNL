@@ -83,8 +83,10 @@ void ReadChannelState(char *Path, DATE *Now, Channel *Head)
 		    CompareRecordID);
     if (Current->id > max_seg)
       max_seg = Current->id;
-    if (Match == NULL)
+    if (Match == NULL) {
+      printf("current ID  %d\n", Current->id);
       ReportError("ReadChannelState", 55);
+    }
     Current->storage = Match->storage;
     Current = Current->next;
   }

@@ -37,8 +37,8 @@
  /*				  InitTables()                                 */
 
  /*******************************************************************************/
-void InitTables(int StepsPerDay, LISTPTR Input, OPTIONSTRUCT *Options, 
-  SOILTABLE **SType, LAYER *Soil, VEGTABLE **VType, 
+void InitTables(int StepsPerDay, LISTPTR Input, OPTIONSTRUCT *Options,
+  SOILTABLE **SType, LAYER *Soil, VEGTABLE **VType,
   LAYER *Veg, SNOWTABLE **SnowAlbedo)
 {
   printf("Initializing tables\n");
@@ -102,6 +102,7 @@ int InitSoilTable(OPTIONSTRUCT *Options, SOILTABLE ** SType,
   };
   char SectionName[] = "SOILS";
   char VarStr[thermal_capacity + 1][BUFSIZE + 1];
+
 
   /* Get the number of different soil types */
   GetInitString(SectionName, "NUMBER OF SOIL TYPES", "", VarStr[0],
@@ -285,6 +286,7 @@ int InitVegTable(VEGTABLE **VType, LISTPTR Input, OPTIONSTRUCT *Options, LAYER *
     "TRUNK SPACE",
     "AERODYNAMIC ATTENUATION",
     "RADIATION ATTENUATION",
+    "DIFFUSE RADIATION ATTENUATION",
     "CLUMPING FACTOR",
     "LEAF ANGLE A",
     "LEAF ANGLE B",
@@ -315,6 +317,7 @@ int InitVegTable(VEGTABLE **VType, LISTPTR Input, OPTIONSTRUCT *Options, LAYER *
   };
   char SectionName[] = "VEGETATION";
   char VarStr[understory_monalb + 1][BUFSIZE + 1];
+  float maxLAI;
 
   /* Get the number of different vegetation types */
   GetInitString(SectionName, "NUMBER OF VEGETATION TYPES", "", VarStr[0],
@@ -491,8 +494,11 @@ int InitVegTable(VEGTABLE **VType, LISTPTR Input, OPTIONSTRUCT *Options, LAYER *
         (*VType)[i].Scat = NOT_APPLICABLE;
         (*VType)[i].LeafAngleA = NOT_APPLICABLE;
         (*VType)[i].LeafAngleB = NOT_APPLICABLE;
+        (*VType)[i].Taud = NOT_APPLICABLE;
       }
-      else if (Options->ImprovRadiation==TRUE){
+      else if (Options->ImprovRadiation == TRUE) {
+        if (!CopyFloat(&((*VType)[i].Taud), VarStr[diff_attn], 1))
+          ReportError(KeyName[diff_attn], 51);
         (*VType)[i].Atten = NOT_APPLICABLE;
         (*VType)[i].ClumpingFactor = NOT_APPLICABLE;
         (*VType)[i].Scat = NOT_APPLICABLE;
@@ -521,6 +527,12 @@ int InitVegTable(VEGTABLE **VType, LISTPTR Input, OPTIONSTRUCT *Options, LAYER *
 
       if (!CopyFloat((*VType)[i].LAIMonthly[0], VarStr[overstory_monlai], 12))
         ReportError(KeyName[overstory_monlai], 51);
+      
+      maxLAI = -9999;
+      for (k = 0; k < 12; k++) {
+        if ((*VType)[i].LAIMonthly[0][k] > maxLAI)
+          maxLAI = (*VType)[i].LAIMonthly[0][k];
+      }
 
       if (!CopyFloat((*VType)[i].AlbedoMonthly[0], VarStr[overstory_monalb], 12))
         ReportError(KeyName[overstory_monalb], 51);
@@ -587,9 +599,9 @@ int InitVegTable(VEGTABLE **VType, LISTPTR Input, OPTIONSTRUCT *Options, LAYER *
        speed of 1 m/s, and are adjusted each timestep using actual reference
        height wind speeds */
     CalcAerodynamic((*VType)[i].NVegLayers, (*VType)[i].OverStory,
-        (*VType)[i].Cn, (*VType)[i].Height, (*VType)[i].Trunk,
-        (*VType)[i].U, &((*VType)[i].USnow), (*VType)[i].Ra,
-        &((*VType)[i].RaSnow));
+      (*VType)[i].Cn, (*VType)[i].Height, (*VType)[i].Trunk,
+      (*VType)[i].U, &((*VType)[i].USnow), (*VType)[i].Ra,
+      &((*VType)[i].RaSnow));
 
     /* Run the improved radiation scheme in which the tree height, solar altitude and fractional coverage
     are all taken into account into the radiation calculation */

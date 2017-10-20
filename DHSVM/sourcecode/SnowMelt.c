@@ -227,8 +227,8 @@ float SnowMelt(int y, int x, int Dt, float Z, float Displacement, float Z0,
 
   /* Else, SnowPackEnergyBalance(T=0.0) <= 0.0 */
   else {
-    /* Calculate surface layer temperature using "Brent method" */
 
+    /* Calculate surface layer temperature using "Brent method" */
     *TSurf = RootBrent(y, x, (float)(*TSurf - DELTAT), (float) 0.0,
       SnowPackEnergyBalance, Dt, BaseRa, Z, Displacement,
       Z0, Wind, ShortRad, LongRadIn, AirDens, Lv, Tair,
@@ -278,7 +278,6 @@ float SnowMelt(int y, int x, int Dt, float Z, float Displacement, float Z0,
      WORK IN PROGRESS: This energy is NOT added to MeltEnergy, since this does
      not involve energy transported to the pixel.  Instead heat from the snow
      pack is used to refreeze water */
-
   *PackWater += Outflow;	/* add surface layer outflow to pack liquid water */
   RefreezeEnergy = *PackWater * LF * WATER_DENSITY;
 
@@ -351,8 +350,7 @@ float SnowMelt(int y, int x, int Dt, float Z, float Displacement, float Z0,
   }
 
   /* Mass balance test */
-  MassBalanceError = (InitialSwq - *Swq) + (RainFall + SnowFall) - Outflow +
-    *VaporMassFlux;
+  MassBalanceError = (InitialSwq-*Swq) + (RainFall+SnowFall)-Outflow + *VaporMassFlux;
 
   return (Outflow);
 }

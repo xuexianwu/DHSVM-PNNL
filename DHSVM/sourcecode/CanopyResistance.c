@@ -47,7 +47,6 @@ float CanopyResistance(float LAI, float RsMin, float RsMax, float Rpc,
   }
 
   /* equation 14, Wigmosta et al [1994] */
-
   if (Vpd >= VpdThres) {
     Resistance = DHSVM_HUGE;
     return Resistance;
@@ -55,12 +54,12 @@ float CanopyResistance(float LAI, float RsMin, float RsMax, float Rpc,
   else
     VpdFactor = 1.0 / (1 - Vpd / VpdThres);
 
-  /* equation 15, Wigmosta et al [1994 */
-
+  /* equation 15, Wigmosta et al [1994] */
+  if (Rp > 0)
+    printf("debug");
   RpFactor = 1.0 / ((RsMin / RsMax + Rp / Rpc) / (1 + Rp / Rpc));
 
   /* equation 16, Wigmosta et al [1994] */
-
   if (SoilMoisture <= WP) {
     Resistance = DHSVM_HUGE;
     return Resistance;

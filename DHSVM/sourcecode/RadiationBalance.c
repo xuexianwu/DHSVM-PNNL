@@ -104,8 +104,8 @@ void RadiationBalance(OPTIONSTRUCT *Options, int HeatFluxOption,
   }
 
   /* Determine Albedo */
-  if (OverStory == TRUE) {
-    Albedo[0] = VType->Albedo[0];
+  if (OverStory == TRUE) {                                                           
+    Albedo[0] = VType->Albedo[0];                                                                              
     /* With snow, understory canopy albedo is set equal to snow albedo */
     if (LocalSnow->HasSnow == TRUE)
       Albedo[1] = LocalSnow->Albedo;
@@ -124,7 +124,6 @@ void RadiationBalance(OPTIONSTRUCT *Options, int HeatFluxOption,
 
   /* Improved radiation scheme taking into account solar position */
   if (OverStory == TRUE) {
-
     if (Options->ImprovRadiation) {
       if (SineSolarAltitude > 0. && Rs > 0.) {
         Tau = exp(-VType->ExtnCoeff * h * F / SineSolarAltitude);
@@ -133,7 +132,6 @@ void RadiationBalance(OPTIONSTRUCT *Options, int HeatFluxOption,
         Tau = 0.;
     }
     else if (CanopyRadAttOption == FIXED) { /* conventional radiation scheme */
-
       Tau = exp(-VType->Atten * VType->LAI[0]);
     }
     /* Nijssen's simplified radiation scheme as in Nijssen and Lettenmaier, 1999 */
@@ -163,7 +161,8 @@ void RadiationBalance(OPTIONSTRUCT *Options, int HeatFluxOption,
     }
   }
 
-  ShortwaveBalance(Options, OverStory, F, Rs, Rsb, Rsd, Tau, Albedo, LocalRad);
+  ShortwaveBalance(Options, OverStory, F, Rs, Rsb, Rsd, Tau, 
+    VType->Taud, Albedo, LocalRad);
 
   if (LocalSnow->HasSnow == TRUE)
     Tsurf = LocalSnow->TSurf;
@@ -301,7 +300,7 @@ void LongwaveBalance(OPTIONSTRUCT *Options, unsigned char OverStory,
     the surface temperatures
 *****************************************************************************/
 void ShortwaveBalance(OPTIONSTRUCT *Options, unsigned char OverStory,
-  float F, float Rs, float Rsb, float Rsd, float Tau,
+  float F, float Rs, float Rsb, float Rsd, float Tau, float Taud,
   float *Albedo, PIXRAD *LocalRad)
 {
   /* Calculate the net shortwave for each layer */
@@ -311,26 +310,26 @@ void ShortwaveBalance(OPTIONSTRUCT *Options, unsigned char OverStory,
     Beause F was factored in during the tau calculations, F is not used
     repeatedly here */
     if (Options->ImprovRadiation == TRUE) {
-      LocalRad->NetShort[0] = Rs * (1 - Albedo[0]) * (1 - Tau * (1 - Albedo[1]));
-      LocalRad->NetShort[1] = Rs * (1 - Albedo[1]) * Tau;
+      LocalRad->NetShort[0] = Rs * (1-Albedo[0]) * (1-Tau*(1-Albedo[1]));
+      LocalRad->NetShort[1] = (1-Albedo[1]) * (Rsb*Tau+Rsd*Taud);
     }
     else {
-      LocalRad->NetShort[0] = Rs * F * ((1 - Albedo[0]) - Tau * (1 - Albedo[1]));
-      LocalRad->NetShort[1] = Rs * (1 - Albedo[1]) * ((1 - F) + (Tau * F));
+      LocalRad->NetShort[0] = Rs * F * ((1-Albedo[0])-Tau*(1-Albedo[1]));
+      LocalRad->NetShort[1] = Rs * (1-Albedo[1]) * ((1-F)+(Tau*F));
     }
   }
   else {
-    LocalRad->NetShort[0] = Rs * (1 - Albedo[0]);
+    LocalRad->NetShort[0] = Rs * (1-Albedo[0]);
     LocalRad->NetShort[1] = 0.;
   }
 
   /* Calculate the net shortwave for the entire pixel */
   if (OverStory == TRUE) {
     if (Options->ImprovRadiation == TRUE) {
-      LocalRad->PixelNetShort = Rs * (1 - Albedo[0] - Albedo[0] * (1 - Albedo[1]));
+      LocalRad->PixelNetShort = Rs * (1-Albedo[0] - Albedo[0]*(1-Albedo[1]));
     }
     else {
-      LocalRad->PixelNetShort = Rs * (1 - Albedo[0] * F - Albedo[1] * (1 - F));
+      LocalRad->PixelNetShort = Rs * (1-Albedo[0]*F - Albedo[1]*(1-F));
     }
   }
   else
@@ -341,8 +340,8 @@ void ShortwaveBalance(OPTIONSTRUCT *Options, unsigned char OverStory,
   created by the local vegetation defined by the input vegetation map */
   if (Options->StreamTemp && !Options->CanopyShading) {
     if (OverStory == TRUE) {
-      LocalRad->RBMNetShort = Rs * (1 - F) + Rs * Tau * F;
-      LocalRad->PixelBeam = Rsb * (1 - F) + Rsb * Tau * F;    // direct beam radiation 
+      LocalRad->RBMNetShort = Rs*(1-F) + Rs*Tau*F;
+      LocalRad->PixelBeam = Rsb*(1-F) + Rsb*Tau*F;    // direct beam radiation 
       LocalRad->PixelDiffuse = LocalRad->RBMNetShort - LocalRad->PixelBeam; // diffuse radiation 
     }
     else {

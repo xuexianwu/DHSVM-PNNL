@@ -58,12 +58,11 @@ in a grid cell due to a road-cut or channel.
 float WaterTableDepth(int NRootLayers, float TotalDepth, float *RootDepth,
   float *Porosity, float *FCap, float *Adjust, float *Moist)
 {
-  float DeepFCap;		   /* field capacity of the layer below the
-                              deepest root layer */
+  float DeepFCap;		    /* field capacity of the layer below the deepest root layer */
   float DeepLayerDepth;		/* depth of layer below deepest root zone layer */
-  float DeepPorosity;		/* porosity of the layer below the deepest root layer */
+  float DeepPorosity;		/* porosity of the layer below the deepest  root layer */
   float TableDepth;		    /* depth of the water table (m) */
-  float MoistureTransfer;   /* amount of soil moisture transferred from
+  float MoistureTransfer;	/* amount of soil moisture transferred from
                                the current layer to the layer above (m) */
   int i;			        /* counter */
   float TotalStorage = 0.0;
@@ -76,6 +75,7 @@ float WaterTableDepth(int NRootLayers, float TotalDepth, float *RootDepth,
   DeepLayerDepth = TotalDepth;
   DeepPorosity = Porosity[NRootLayers - 1];
   DeepFCap = FCap[NRootLayers - 1];
+  
   for (i = 0; i < NRootLayers; i++)
     DeepLayerDepth -= RootDepth[i];
 
@@ -128,26 +128,32 @@ float WaterTableDepth(int NRootLayers, float TotalDepth, float *RootDepth,
     DeepStorage = DeepLayerDepth * Adjust[NRootLayers] * (DeepPorosity - DeepFCap);
     DeepExcessFCap = DeepLayerDepth * Adjust[NRootLayers] * (Moist[NRootLayers] - DeepFCap);
 
-    assert(DeepExcessFCap >= 0.0);
+    if (DeepExcessFCap < 0.0) {
+      TableDepth = TotalDepth;
+    }
+    else {
+      assert(DeepExcessFCap >= 0.0);
+      TableDepth = TotalDepth - (DeepExcessFCap / DeepStorage)*DeepLayerDepth;
 
-    TableDepth = TotalDepth - (DeepExcessFCap / DeepStorage)*DeepLayerDepth;
+      if (Moist[NRootLayers] >= DeepPorosity) {
+        for (i = NRootLayers - 1; i >= 0; i--) {
+          Storage = RootDepth[i] * Adjust[i] * (Porosity[i] - FCap[i]);
+          ExcessFCap = RootDepth[i] * Adjust[i] * (Moist[i] - FCap[i]);
+          if (ExcessFCap < 0.0)
+            ExcessFCap = 0.0f;
+          if (Moist[i] < Porosity[i]) {
+            TableDepth -= (ExcessFCap / Storage)*RootDepth[i];
+            break;
 
-    if (Moist[NRootLayers] >= DeepPorosity) {
-      for (i = NRootLayers - 1; i >= 0; i--) {
-        Storage = RootDepth[i] * Adjust[i] * (Porosity[i] - FCap[i]);
-        ExcessFCap = RootDepth[i] * Adjust[i] * (Moist[i] - FCap[i]);
-        if (ExcessFCap < 0.0)
-          ExcessFCap = 0.0f;
-        if (Moist[i] < Porosity[i]) {
-          TableDepth -= (ExcessFCap / Storage)*RootDepth[i];
-          break;
-        }
-        else {
-          TableDepth -= RootDepth[i];
+          }
+          else {
+            TableDepth -= RootDepth[i];
+          }
         }
       }
     }
   }
+  //printf("Table Depth is %.6f\n",TableDepth);
   if (TableDepth > TotalDepth)
     printf("TableDepth = %.4f, TotalDepth = %.4f\n", TableDepth, TotalDepth);
   if (TableDepth != TableDepth)

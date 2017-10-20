@@ -256,22 +256,18 @@ void SolarAngle(float Latitude, float Albedo, float Declination,
   float SineSolarAltitude, float SolarTimeStep, int DayLight,
   float SolarAzimuth, float Dt, float *Direct, float *Diffuse)
 {
-  float SolarAltitude;		/* SolarAltitude of sun from horizon (rads) */
+  float SolarAltitude;		    /* SolarAltitude of sun from horizon (rads) */
   float CosineIncidenceAngle;	/* cosine of the incidence angle between
-                   solar rays and the normal to the surface */
-  float DiffuseSkyView;		/* sky view factor for diffuse radation
-                   (0.0 - 1.0)  */
-  float ReflectedSkyView;	/* view factor for incoming refected solar
-                   radiation (0.0 - 1.0) */
-  float Reflect;		/* incoming reflected solar radiation (W/m^2)
-                 */
+                                   solar rays and the normal to the surface */
+  float DiffuseSkyView;		/* sky view factor for diffuse radation (0.0 - 1.0)  */
+  float ReflectedSkyView;	/* view factor for incoming refected solar radiation (0.0 - 1.0) */
+  float Reflect;		    /* incoming reflected solar radiation (W/m^2) */
 
-                 /* NOTE THAT HERE Dt IS IN HOURS, NOT IN SECONDS */
+  /* NOTE THAT HERE Dt IS IN HOURS, NOT IN SECONDS */
 
   if (DayLight == TRUE) {
 
     /* calculate shortwave components horizontal surface */
-
     if (fequal(CellSlope, 0.0)) {
       *Direct = SunMax;
       *Diffuse = SunMax;

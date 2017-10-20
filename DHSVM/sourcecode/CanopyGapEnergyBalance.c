@@ -63,23 +63,74 @@ void CanopyGapSnowMelt(OPTIONSTRUCT *Options, int y, int x, int Dt,
   float SnowRa;				/* Aerodynamic resistance for snow */
   float SnowWind;		    /* Wind 2 m above snow */
   float Tsurf;              /* Surface temperature */
+  float OldTSurf;           /* Effective surface temperature at the end of the last timestep (C)*/
+  float Tmean;              /* Average snow surface temperature*/
+  float tmp;                /* temporary variable */
+  float Tmp;                /* temporary variable */
+  float Ls;			        /* Latent heat of sublimation (J/kg) */
 
   /********************* calculate gap snow melt *********************/
   if ((*Gap)[Opening].HasSnow || (*Gap)[Opening].SnowFall > 0.0) {
     SnowLongIn = (*Gap)[Opening].LongIn[1];
     SnowNetShort = (*Gap)[Opening].NetShort[1];
 
-    SnowWind = (*Gap)[Opening].USnow * LocalMet->Wind;
-    SnowRa = (*Gap)[Opening].RaSnow / LocalMet->Wind;
+    SnowWind = (*Gap)[Opening].USnow * LocalMet->Wind;  
+    SnowRa = (*Gap)[Opening].RaSnow / LocalMet->Wind; 
+    
+    /* adjust the wind and Ra values for gap so they fall betwene open 
+    and forested values */
+    tmp = VType->USnow*LocalMet->Wind; //forested snow wind
+    SnowWind = tmp + (SnowWind- tmp)*GAPWIND_FACTOR;
 
+    tmp = VType->RaSnow/LocalMet->Wind;
+    SnowRa = tmp - (tmp-SnowRa)*GAPWIND_FACTOR;
+    
+    OldTSurf = (*Gap)[Opening].TSurf;
     (*Gap)[Opening].SnowPackOutflow =
-      SnowMelt(y, x, Dt, 2. + Z0_SNOW, 0.f, Z0_SNOW, SnowRa, LocalMet->AirDens,
+      SnowMelt(y, x, Dt, 2.+Z0_SNOW, 0.f, Z0_SNOW, SnowRa, LocalMet->AirDens,
         LocalMet->Eact, LocalMet->Lv, SnowNetShort, SnowLongIn,
         LocalMet->Press, (*Gap)[Opening].RainFall, (*Gap)[Opening].SnowFall,
         LocalMet->Tair, LocalMet->Vpd, SnowWind,
         &((*Gap)[Opening].PackWater), &((*Gap)[Opening].SurfWater),
         &((*Gap)[Opening].Swq), &((*Gap)[Opening].VaporMassFlux),
         &((*Gap)[Opening].TPack), &((*Gap)[Opening].TSurf), &((*Gap)[Opening].MeltEnergy));
+
+    /* Calculate the terms of the snow energy balance.  This is similar to the
+    code in SnowPackEnergyBalance.c */
+    Tmean = 0.5 * (OldTSurf + (*Gap)[Opening].TSurf);
+
+    /* Apply the stability correction to the aerodynamic resistance */
+    if (SnowWind > 0.0)
+      SnowRa /= StabilityCorrection(2.0f, 0.f, Tmean, LocalMet->Tair, SnowWind, Z0_SNOW);
+    else
+      SnowRa = DHSVM_HUGE;
+
+    /* convert snow surface temperature from C to K */
+    Tmp = Tmean + 273.15;
+    /* net shortwave radiation */
+    (*Gap)[Opening].Qsw = SnowNetShort;
+    /* net longwave radiation */
+	(*Gap)[Opening].Qlin = SnowLongIn;
+    (*Gap)[Opening].Qlw = SnowLongIn - STEFAN * (Tmp * Tmp * Tmp * Tmp);
+    /* sensible heat */
+    (*Gap)[Opening].Qs = LocalMet->AirDens * CP * (LocalMet->Tair - Tmean) / SnowRa;
+
+    /* Calculate latent heat flux */
+    if (Tmean >= 0.0) {
+      /* Melt conditions: use latent heat of vaporization */
+      (*Gap)[Opening].Qe = LocalMet->Lv * (*Gap)[Opening].VaporMassFlux * WATER_DENSITY;
+    }
+    else {
+      /* Accumulation: use latent heat of sublimation (Eq. 3.19, Bras 1990 */
+      Ls = (677. - 0.07 * Tmean) * JOULESPCAL * GRAMSPKG;
+      (*Gap)[Opening].Qe = Ls * (*Gap)[Opening].VaporMassFlux * WATER_DENSITY;
+    }
+    (*Gap)[Opening].Qe /= Dt;
+
+    /* Calculate advected heat flux from rain */
+    (*Gap)[Opening].Qp = (CH_WATER * LocalMet->Tair * (*Gap)[Opening].RainFall) / Dt;
+
+    /* end of snow energy tems */
 
     /* Rainfall was added to SurfWater of the snow pack and has to be set to zero */
     (*Gap)[Opening].RainFall = 0.0;
@@ -89,12 +140,21 @@ void CanopyGapSnowMelt(OPTIONSTRUCT *Options, int y, int x, int Dt,
     can recalculate the longwave balance */
     Tsurf = Gap[Opening]->TSurf;
     CanopyGapLongRadiation(&((*Gap)[Opening]), VType->Height[0],
-      VType->GapDiam, LocalMet->Lin, Tsurf);
+      VType->GapDiam, LocalMet->Lin, LocalVeg->Tcanopy, VType->Fract[0]);
     (*Gap)[Opening].LongIn[0] = 0.;
   }
   else {
     (*Gap)[Opening].SnowPackOutflow = 0.0;
     (*Gap)[Opening].VaporMassFlux = 0.0;
+
+	/* snow is all melt */
+	(*Gap)[Opening].Qs = 0.;
+	(*Gap)[Opening].Qe = 0.;
+	(*Gap)[Opening].Qp = 0.;
+	(*Gap)[Opening].Qsw = 0;
+	(*Gap)[Opening].Qlin = 0;
+	(*Gap)[Opening].Qlw = 0; /* not used in calculation */
+	(*Gap)[Opening].MeltEnergy = 0;
   }
 
   if ((*Gap)[Opening].Swq > 0.0)
@@ -131,19 +191,19 @@ void CalcCanopyGapAerodynamic(CanopyGapStruct **Gap, int NVegLayers,
 
   /* No snow: get wind speed & aerodynamic resistence value */
   (*Gap)[Opening].U[1] =
-    log((2. + Z0_Lower) / Z0_Lower) / log((Zref - d_Lower) / Z0_Lower);
+    log((2.+Z0_Lower)/Z0_Lower) / log((Zref-d_Lower)/Z0_Lower);
   (*Gap)[Opening].Ra[1] =
-    log((2. + Z0_Lower) / Z0_Lower) * log((Zref - d_Lower) / Z0_Lower) / K2;
+    log((2.+Z0_Lower)/Z0_Lower) * log((Zref-d_Lower)/Z0_Lower)/K2;
 
   /* get the wind speed and aerodynamic resistence value for snow surface*/
-  (*Gap)[Opening].USnow = log((2. + Z0_SNOW) / Z0_SNOW) / log(Zref / Z0_SNOW);
-  (*Gap)[Opening].RaSnow = log((2. + Z0_SNOW) / Z0_SNOW) * log(Zref / Z0_SNOW) / K2;
+  (*Gap)[Opening].USnow = log((2.+Z0_SNOW)/Z0_SNOW) / log(Zref/Z0_SNOW);
+  (*Gap)[Opening].RaSnow = log((2.+Z0_SNOW)/Z0_SNOW) * log(Zref/Z0_SNOW)/K2;
 }
 
 /*****************************************************************************
 Function name: CalcCanopyGapET()
 
-Purpose      : Calculate the ET.
+Purpose      : Calculate the ET
 *****************************************************************************/
 void CalcCanopyGapET(CanopyGapStruct **Gap, int NSoil, VEGTABLE *VType,
   VEGPIX *LocalVeg, SOILTABLE *SType, SOILPIX *LocalSoil, PIXMET *LocalMet,
@@ -184,7 +244,6 @@ void CalcCanopyGapET(CanopyGapStruct **Gap, int NSoil, VEGTABLE *VType,
       (*Gap)[Opening].NetShort[1] + (*Gap)[Opening].LongIn[1] - (*Gap)[Opening].LongOut[1];
     (*Gap)[Opening].NetRadiation[1] = NetRadiation;
     (*Gap)[Opening].NetRadiation[0] = 0.;
-    printf("Gap soil evapo");
     (*Gap)[Opening].EvapSoil =
       SoilEvaporation(Dt, LocalMet->Tair, LocalMet->Slope, LocalMet->Gamma,
         LocalMet->Lv, LocalMet->AirDens, LocalMet->Vpd,
@@ -259,7 +318,7 @@ void CalcGapSurroudingIntercept(OPTIONSTRUCT *Options, int HeatFluxOption,
     SnowRa = VType->RaSnow / LocalMet->Wind;
 
     (*Gap)[Forest].SnowPackOutflow =
-      SnowMelt(y, x, Dt, 2. + Z0_SNOW, 0.f, Z0_SNOW, SnowRa, LocalMet->AirDens,
+      SnowMelt(y, x, Dt, 2.+Z0_SNOW, 0.f, Z0_SNOW, SnowRa, LocalMet->AirDens,
         LocalMet->Eact, LocalMet->Lv, SnowNetShort, SnowLongIn,
         LocalMet->Press, (*Gap)[Forest].RainFall, (*Gap)[Forest].SnowFall,
         LocalMet->Tair, LocalMet->Vpd, SnowWind,
@@ -384,7 +443,7 @@ void AggregateCanopyGap(CanopyGapStruct **Gap, VEGPIX *LocalVeg,
   LocalSnow->VaporMassFlux =
     weight*(*Gap)[Opening].VaporMassFlux + (1-weight)*(*Gap)[Forest].VaporMassFlux;
 
-  for (i = 0; i < 2; i++) {
+  for (i = 0; i <= NVeg; i++) {
     LocalRad->NetShort[i] = 
       weight*(*Gap)[Opening].NetShort[i] + (1-weight)*(*Gap)[Forest].NetShort[i];
     LocalRad->LongIn[i] = 

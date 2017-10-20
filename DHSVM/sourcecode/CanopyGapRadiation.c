@@ -48,29 +48,29 @@ void CanopyGapRadiation(CanopyGapStruct **Gap, float SunAngle, float Rs,
   float Rsb, float Rsd, float Ld, float TSurf, float Tcanopy, float SoilAlbedo,
   VEGTABLE *VType, SNOWPIX *LocalSnow, PIXRAD *LocalRad)
 {
+
   /* ==== OPENING PORTION (no overstory if gap presents) ====*/
   (*Gap)[Opening].OverStory = FALSE;
   (*Gap)[Opening].UnderStory = VType->UnderStory;
 
   /* net shortwave received by the opening*/
   (*Gap)[Opening].NetShort[1] = CanopyGapShortRadiation((*Gap)[Opening].UnderStory,
-    VType->Height[0], VType->GapDiam, SunAngle, Rsb, Rsd, VType->ExtnCoeff,
-    SoilAlbedo, VType, LocalSnow);
+    (*Gap)[Opening].GapView, VType->Height[0], VType->GapDiam, SunAngle, Rsb,
+    Rsd, VType->ExtnCoeff, SoilAlbedo, VType, LocalSnow, VType->Fract[0]);
   (*Gap)[Opening].NetShort[0] = 0;
 
   /* net longwave received by the opening*/
-  CanopyGapLongRadiation(Gap[Opening], VType->Height[0],
-    VType->GapDiam, Ld, TSurf);
+  CanopyGapLongRadiation(Gap[Opening], VType->Height[0], VType->GapDiam, Ld, 
+    TSurf, VType->Fract[0]);
   (*Gap)[Opening].LongIn[0] = 0.;
 }
 
 /********************************************************************************
 Function Name: CanopyGapShortRadiation()
 ********************************************************************************/
-float CanopyGapShortRadiation(int Understory, float h, float dm, float SunAngle,
-  float Rsb, float Rsd, float Extn, float SoilAlbedo, VEGTABLE *VType,
-  SNOWPIX *LocalSnow)
-
+float CanopyGapShortRadiation(int Understory, float GapView, float h, float dm, 
+  float SunAngle, float Rsb, float Rsd, float Extn, float SoilAlbedo, 
+  VEGTABLE *VType, SNOWPIX *LocalSnow, float Vf)
 {
 
   float Dmax;       /* max length of shadow */
@@ -81,12 +81,13 @@ float CanopyGapShortRadiation(int Understory, float h, float dm, float SunAngle,
   float I2 = 0.;    /* area receiving incoming attenuated beam radiation */
   float Area;       /* gap area */
   float ls;         /* length along optical axis that defines shading area */
-  float GapView;    /* canopy view to sky adjusted for canopy gap */
-  float j;          /* temp variable */
-
   float Rbg = 0.;   /* net beam radiation incident on canopy gap */
   float Rdg = 0.;   /* net diffuse radiation incident on canopy gap */
-  float Rs;         /* net shortwave radiation - beam + diffuse radiation */
+  float Rsg;         /* net shortwave radiation - beam + diffuse radiation */
+  float temp;
+
+  temp = h / dm; 
+  //GapView = (1 + GAPVIEW_FACTOR) * (1 - 2 * temp*(sqrt(1 + temp*temp) - temp)) / Vf;
 
   if (LocalSnow->HasSnow == TRUE)
     Albedo = LocalSnow->Albedo;
@@ -99,6 +100,10 @@ float CanopyGapShortRadiation(int Understory, float h, float dm, float SunAngle,
   R = 0.5 * dm;
   Area = PI * R * R;
 
+  /* Canopy view to sky is adjusted for canopy gap, and is estimated as a fraction
+  of the overlying hemisphere opened to the base of the gap (Ellis et al., 2013) */
+  Rdg = Rsd*(GapView + VType->Taud*(1-GapView));
+
   if (SunAngle > 0.) {
     /* Calculate max length of cast shadow in the canopy gap */
     Dmax = h / tan(SunAngle);
@@ -107,57 +112,64 @@ float CanopyGapShortRadiation(int Understory, float h, float dm, float SunAngle,
 
     /* case A: Dmax >= Gap diameter -- attenuated light only */
     if (Dmax >= dm) {
-      I2 = AreaIntegral(Extn, Lmax, SunAngle, R, R, 0);
+      I2 = AreaIntegral(Extn, Lmax, SunAngle, R, R, 0, Rsb, Rdg, Albedo);
       Rbg = (2 * Rsb) / Area * I2;
     }
     /* case B: Dmax < Gap diameter -- both direct and attenuated light */
     else {
       ls = sqrt(dm*dm - Dmax*Dmax);
       I1 = Area - 0.5 * (dm*dm*asin(Dmax / dm) + Dmax*ls);
-      I2 = 2 * (AreaIntegral(Extn, Lmax, SunAngle, R, R, 0.5*ls) +
+      /* debug - output gap-center shortwave radiation */
+      fprintf(stderr, "%f\n", (Rsb+Rdg));
+      /* debug ends */
+      I2 = 2 * (AreaIntegral(Extn, Lmax, SunAngle, R, R, 0.5*ls, Rsb, Rsd, Albedo) +
         (exp(-0.5*Lmax / Extn)) * Dmax * (ls*0.5));
       Rbg = Rsb / Area * (I1 + I2);
     }
   }
-  else
+  else {
     Rbg = 0.;
-
-  /* Canopy view to sky is adjusted for canopy gap, and is estimated as a fraction
-  of the overlying hemisphere opened to the base of the gap (Ellis et al., 2013) */
-  j = h / dm;
-  GapView = 1 - 2 * j*(sqrt(1 + j*j) - j);
-  Rdg = Rsd *(GapView + (1 - GapView));
+    /* debug - output gap-center shortwave radiation */
+    fprintf(stderr, "%f\n", (Rsb + Rsd));
+    /* debug ends */
+  }
 
   /* net shortwave radiation received by the opening */
-  Rs = (Rdg + Rbg) * (1 - Albedo);
+  Rsg = (Rdg + Rbg) * (1 - Albedo);
 
-  return Rs;
+  return Rsg;
 }
 
 /********************************************************************************
 Function Name: CanopyGapLongRadiation()
 Purpose      : Calculate net long radiation incident on canopy gap
 ********************************************************************************/
-void CanopyGapLongRadiation(CanopyGapStruct *Gap, float h,
-  float dm, float Ld, float Tsurf)
+void CanopyGapLongRadiation(CanopyGapStruct *Gap, float h, float dm, float Ld, 
+  float TCanopy, float Vf)
 {
-  float GapView;    /* canopy view to sky adjusted for canopy gap */
-  float temp;       /* temporary variable */
-  float Tmp;        /* surface temperature in K */
 
-  temp = h / dm;
-  GapView = 1 - 2 * temp*(sqrt(1 + temp*temp) - temp);
+  float Tmp;        /* surface temperature in K */
+  float GapView;    /* canopy view to sky adjusted for canopy gap */
+  
+  GapView = Gap->GapView/Vf;
+
+  if (GapView <= (1 - Vf)) {
+    GapView = 1 - Vf;
+  }
+  if (GapView >= 1) {
+    GapView = 0.99;
+    printf("Warning: GapView>=100% .. reset to 0.99 ..\n");
+  }
 
   /* calculate emitted longwave for each layer */
-  Tmp = Tsurf + 273.15;
+  Tmp = TCanopy + 273.15;
   /* understory */
-  Gap->LongOut[1] = STEFAN * (Tmp * Tmp * Tmp * Tmp);
+  Gap->LongOut[1] = STEFAN * (Tmp*Tmp*Tmp*Tmp);
   /* removed overstory */
   Gap->LongOut[0] = 0.;
 
   /* net longwave radiation */
-  Gap->LongIn[1] =
-    Ld*GapView + (1 - GapView)*Ld;
+  Gap->LongIn[1] = Ld*GapView + STEFAN*(Tmp*Tmp*Tmp*Tmp)*(1-GapView);
 }
 
 /********************************************************************************
@@ -175,7 +187,7 @@ void GapSurroundingLongRadiation(CanopyGapStruct *Forest, float Ld, float Vf,
   Forest->LongOut[1] = STEFAN * (Tmp * Tmp * Tmp * Tmp);
 
   Forest->LongIn[0] = (Ld + Forest->LongOut[1]) * Vf;
-  Forest->LongIn[1] = Ld*(1 - Vf) + Forest->LongOut[0] * Vf;
+  Forest->LongIn[1] = Ld * (1 - Vf) + Forest->LongOut[0] * Vf;
 
   Forest->PixelLongIn = Ld;
   Forest->PixelLongOut = Forest->LongOut[0] * F + Forest->LongOut[1] * (1 - F);
@@ -230,26 +242,63 @@ Returns      :
 Comments     :
 ********************************************************************************/
 float AreaIntegral(float Extn, float Lmax, float SolarAltitude, float R,
-  float xmax, float xmin)
+  float xmax, float xmin, float Rsb, float Rdg, float Albedo)
 {
 
   float x;      /* distance between any point along the optical axis to gap center */
   float u;      /* area defined by the function between two boundary limits*/
   float deltax; /* increment */
+  float Rad;
 
   deltax = (xmax - xmin) / MAXIT;
+ 
   u = 0.;
   for (x = xmin; x <= xmax; x += deltax) {
+    /* debug */
+    Rad = (Rsb*exp(-Extn*(Lmax-sqrt(R*R-x*x)/cos(SolarAltitude))) + Rdg);
+    if (xmin == 0 && x==0)
+      fprintf(stderr, "%f \n", Rad);
+    /* debug ends*/
+    
     u +=
       exp(-Extn*(Lmax - sqrt(R*R - x*x) / cos(SolarAltitude))) * sqrt(R*R - x*x) * deltax;
   }
-
   return u;
 }
 
 
+/********************************************************************************
+Function Name: CalcGapView()
+********************************************************************************/
+float CalcGapView(float R, float H, float F) {
 
+  float GapView;
+  float SVF;
+  float I;
+  float delta_r;
+  float r;
+  float delta_alpha;
+  float alpha;
+  float junk;
+  int iter = 20;
 
+  delta_r = R / iter;
+  delta_alpha = 2 * PI / iter;
+  GapView = 0;
+
+  for (r = 0; r <= R; r += delta_r) {
+    SVF = 0;
+    for (alpha = 0; alpha <= 2 * PI; alpha += delta_alpha) {
+      I = sqrt(R*R - r*r*sin(alpha)*sin(alpha)) - r*cos(alpha);
+      junk = atan2(I, H);
+      SVF += 1 / (PI*PI) * atan2(I, H) * delta_alpha / F;
+    }
+    GapView += SVF * delta_r;
+  }
+  GapView /= R;
+
+  return GapView;
+}
 
 
 

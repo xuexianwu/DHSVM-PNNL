@@ -41,7 +41,7 @@ int (*Read2DMatrix) (char *FileName, void *Matrix, int NumberType, int NY, int N
 int (*Write2DMatrix) (char *FileName, void *Matrix, int NumberType, int NY, int NX, ...);
 
 /* global strings */
-char *version = "Version 3.1.1";        /* store version string */
+char *version = "Version 3.1.4";        /* store version string */
 char commandline[BUFSIZE + 1] = "";		/* store command line */
 char fileext[BUFSIZ + 1] = "";			/* file extension */
 char errorstr[BUFSIZ + 1] = "";			/* error message */
@@ -76,12 +76,14 @@ int main(int argc, char **argv)
   AGGREGATED Total = {			/* Total or average value of a  variable over the entire basin */
     {0.0, NULL, NULL, NULL, NULL, 0.0},												/* EVAPPIX */
     {0.0, 0.0, 0.0, 0.0, NULL, NULL, 0.0, 0, 0.0},								    /* PRECIPPIX */
-    {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, 0.0, {0.0, 0.0}, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
-                                                                                    /* PIXRAD */
+    {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, 0.0, {0.0, 0.0}, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+    0.0, 0.0, 0.0, 0.0 },                                                           /* PIXRAD */
     {0.0, 0.0, 0, NULL, NULL, 0.0, 0, 0.0, 0.0, 0.0, 0.0, NULL, NULL},				/* ROADSTRUCT*/
-    {0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},		/* SNOWPIX */
+    {0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },		                                            /* SNOWPIX */
     {0, 0.0, NULL, NULL, NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},			                /* SOILPIX */
+	{0, 0, 0.0, 0.0, 0.0, NULL},                                                    /* VEGPIX */                                           
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0l, 0.0, 0.0
   };
   CHANNEL ChannelData = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
@@ -211,7 +213,7 @@ int main(int argc, char **argv)
   }
 
   InitSnowMap(&Map, &SnowMap);
-  InitAggregated(Veg.MaxLayers, Soil.MaxLayers, &Total);
+  InitAggregated(&Options, Veg.MaxLayers, Soil.MaxLayers, &Total);
 
   InitModelState(&(Time.Start), &Map, &Options, PrecipMap, SnowMap, SoilMap,
 		 Soil, SType, VegMap, Veg, VType, Dump.InitStatePath,
@@ -253,8 +255,17 @@ int main(int argc, char **argv)
   while (Before(&(Time.Current), &(Time.End)) ||
 	 IsEqualTime(&(Time.Current), &(Time.End))) {
 
+    /* debug */
+    if (Time.Current.Month==2 && Time.Current.Day==16 && Time.Current.Hour==22)
+      printf("\n");
+    //printf("\n%d/%d/%d-%d:%d\n", Time.Current.Month, Time.Current.Day, Time.Current.Year, Time.Current.Hour, Time.Current.Min);*/
+    /* debug ends */
+
     /* reset aggregated variables */
     ResetAggregate(&Soil, &Veg, &Total, &Options);
+
+    /* redistribute snow based on snow surface slope etc */
+    Avalanche(&Map, TopoMap, &Time, &Options, SnowMap);
 
     if (IsNewMonth(&(Time.Current), Time.Dt))
       InitNewMonth(&Time, &Options, &Map, TopoMap, PrismMap, ShadowMap,
@@ -318,14 +329,12 @@ int main(int argc, char **argv)
 	        else
 	          SoilMap[y][x].Temp[i] = LocalMet.Tair;
 		  }
-		  
 		  MassEnergyBalance(&Options, y, x, SolarGeo.SineSolarAltitude, Map.DX, Map.DY, 
 			    Time.Dt, Options.HeatFlux, Options.CanopyRadAtt, Options.Infiltration, Soil.MaxLayers,
 				Veg.MaxLayers, &LocalMet, &(Network[y][x]), &(PrecipMap[y][x]), 
 			    &(VType[VegMap[y][x].Veg-1]), &(VegMap[y][x]), &(SType[SoilMap[y][x].Soil-1]),
 			    &(SoilMap[y][x]), &(SnowMap[y][x]), &(RadiationMap[y][x]), &(EvapMap[y][x]), 
                 &(Total.Rad), &ChannelData, SkyViewMap);
-		 
 		  PrecipMap[y][x].SumPrecip += PrecipMap[y][x].Precip;
 		}
 	  }
@@ -341,8 +350,7 @@ int main(int argc, char **argv)
  #ifndef SNOW_ONLY
     
     RouteSubSurface(Time.Dt, &Map, TopoMap, VType, VegMap, Network,
-		    SType, SoilMap, &ChannelData, &Time, &Options, Dump.Path,
-		    MaxStreamID, SnowMap);
+		    SType, SoilMap, &ChannelData, &Time, &Options, Dump.Path, SnowMap);
 
     if (Options.HasNetwork)
       RouteChannel(&ChannelData, &Time, &Map, TopoMap, SoilMap, &Total, 

@@ -64,7 +64,7 @@
 
                 |-----| DX
 
-          0-----1-----2  ---
+          6-----5-----4  ---
 	  |\    |    /|   |
           | \   |   / |   |
           |  \  |  /  |   | DY
@@ -76,7 +76,7 @@
           |  /  |  \  |
           | /   |   \ |
           |/    |    \|
-          6-----5-----4
+          0-----1-----2
 
   For the current implementation it is assumed that the resolution is the 
   same in both the X and the Y direction.  If this is not the case an error
@@ -100,7 +100,7 @@ void RouteSubSurface(int Dt, MAPSIZE *Map, TOPOPIX **TopoMap,
 		     ROADSTRUCT **Network, SOILTABLE *SType,
 		     SOILPIX **SoilMap, CHANNEL *ChannelData,
 		     TIMESTRUCT *Time, OPTIONSTRUCT *Options, 
-		     char *DumpPath, int MaxStreamID, SNOWPIX **SnowMap)
+		     char *DumpPath, SNOWPIX **SnowMap)
 {
   const char *Routine = "RouteSubSurface";
   int x;			/* counter */

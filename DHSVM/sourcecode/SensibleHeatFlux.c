@@ -80,7 +80,6 @@ void SensibleHeatFlux(int y, int x, int Dt, float Ra, float ZRef,
 
   /* Calculate the terms of the energy balance.  This is similar to the
      code in SurfaceEnergyBalance.c */
-
   TMean = 0.5 * (OldTSurf + LocalSoil->TSurf);
 
   if (LocalMet->Wind > 0.0)
@@ -90,15 +89,11 @@ void SensibleHeatFlux(int y, int x, int Dt, float Ra, float ZRef,
     Ra = DHSVM_HUGE;
 
   LocalSoil->Ra = Ra;
-
   Tmp = TMean + 273.15;
 
   LocalSoil->Qnet = NetShort + LongIn - STEFAN * (Tmp * Tmp * Tmp * Tmp);
-
   LocalSoil->Qs = LocalMet->AirDens * CP * (LocalMet->Tair - TMean) / Ra;
-
   LocalSoil->Qe = -(LocalMet->Lv * ETot) / Dt * WATER_DENSITY;
-
   LocalSoil->Qg = KhEff * (TSoilLower - TMean) / FluxDepth;
 
   HeatCapacity = (1 - SoilType->Porosity[0]) * SoilType->Ch[0];

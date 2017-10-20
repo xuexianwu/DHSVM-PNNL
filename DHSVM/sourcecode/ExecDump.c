@@ -41,12 +41,14 @@ void ExecDump(MAPSIZE *Map, DATE *Current, DATE *Start, OPTIONSTRUCT *Options,
   int j;			/* counter */
   int x;
   int y;
+  int flag;
 
   /* dump the aggregated basin values for this timestep */
+  flag = 1;
   DumpPix(Current, IsEqualTime(Current, Start), &(Dump->Aggregate),
     &(Total->Evap), &(Total->Precip), &(Total->Rad), &(Total->Snow),
-    &(Total->Soil), Soil->MaxLayers, Veg->MaxLayers, Options);
-  //fprintf(Dump->Aggregate.FilePtr, " %lu", Total->Saturated);
+    &(Total->Soil), &(Total->Veg), Soil->MaxLayers, Veg->MaxLayers, 
+    Options, flag);
   fprintf(Dump->Aggregate.FilePtr, "\n");
 
   if (Options->Extent != POINT) {
@@ -76,12 +78,18 @@ void ExecDump(MAPSIZE *Map, DATE *Current, DATE *Start, OPTIONSTRUCT *Options,
     for (i = 0; i < Dump->NPix; i++) {
       y = Dump->Pix[i].Loc.N;
       x = Dump->Pix[i].Loc.E;
+      printf("%s\n", Dump->Pix[i].OutFile.FileName);
+      printf("y=%d, x=%d, row=%d, col=%d\n", y, x, y + 1, x + 1);
+      printf("elev=%.3f\n", TopoMap[y][x].Dem);
+      printf("slope=%.1f\n", TopoMap[y][x].Slope);
+      printf("veg=%d\n", VegMap[y][x].Veg);
 
       /* output variable at the pixel */
+      flag = 2;
       DumpPix(Current, IsEqualTime(Current, Start), &(Dump->Pix[i].OutFile),
         &(EvapMap[y][x]), &(PrecipMap[y][x]), &(RadMap[y][x]), &(SnowMap[y][x]),
-        &(SoilMap[y][x]), Soil->NLayers[(SoilMap[y][x].Soil - 1)],
-        Veg->NLayers[(VegMap[y][x].Veg - 1)], Options);
+        &(SoilMap[y][x]), &(VegMap[y][x]), Soil->NLayers[(SoilMap[y][x].Soil - 1)],
+        Veg->NLayers[(VegMap[y][x].Veg - 1)], Options, flag);
       fprintf(Dump->Pix[i].OutFile.FilePtr, "\n");
     }
 
@@ -659,7 +667,7 @@ void DumpMap(MAPSIZE *Map, DATE *Current, MAPDUMP *DMap, TOPOPIX **TopoMap,
     else
       ReportError(VarIDStr, 66);
     break;
-
+    
   case 405:
     if (DMap->Resolution == MAP_OUTPUT) {
       for (y = 0; y < Map->NY; y++)
@@ -1078,8 +1086,8 @@ void DumpMap(MAPSIZE *Map, DATE *Current, MAPDUMP *DMap, TOPOPIX **TopoMap,
 DumpPix()
 *****************************************************************************/
 void DumpPix(DATE *Current, int first, FILES *OutFile, EVAPPIX *Evap,
-  PRECIPPIX *Precip, PIXRAD *Rad, SNOWPIX *Snow, SOILPIX *Soil, int NSoil,
-  int NCanopyStory, OPTIONSTRUCT *Options)
+  PRECIPPIX *Precip, PIXRAD *Rad, SNOWPIX *Snow, SOILPIX *Soil, VEGPIX *Veg,
+  int NSoil, int NCanopyStory, OPTIONSTRUCT *Options, int flag)
 {
   int i, j;			/* counter */
 
@@ -1110,24 +1118,33 @@ void DumpPix(DATE *Current, int first, FILES *OutFile, EVAPPIX *Evap,
     for (i = 0; i < NCanopyStory; i++)
       fprintf(OutFile->FilePtr, " IntSnow.Story%d ", i);
 
+    for (i = 0; i <= NSoil; i++)
+      fprintf(OutFile->FilePtr, " SoilMoist%d ", (i+1));
     for (i = 0; i < NSoil; i++)
-      fprintf(OutFile->FilePtr, " SoilMoist%d ", (i + 1));
-    for (i = 0; i < NSoil; i++)
-      fprintf(OutFile->FilePtr, " Perc%d ", (i + 1));
+      fprintf(OutFile->FilePtr, " Perc%d ", (i+1));
     fprintf(OutFile->FilePtr, " TableDepth SatFlow DetentionStorage ");
 
     /* print radiation associated variables */
-    for (i = 0; i < NCanopyStory; i++)
-      fprintf(OutFile->FilePtr, " NetShort.Story%d ", (i + 1));
+    for (i = 0; i <= NCanopyStory; i++)
+      fprintf(OutFile->FilePtr, " NetShort.Story%d ", (i+1));
+    for (i = 0; i <= NCanopyStory; i++)
+      fprintf(OutFile->FilePtr, " LongIn.Story%d ", (i+1));
     fprintf(OutFile->FilePtr, " PixelNetShort ");
 
     if (Options->HeatFlux)
       fprintf(OutFile->FilePtr, " TSurf ");
 
-    fprintf(OutFile->FilePtr, " Qnet Qs Qe Qg Qst Ra ");
-
+	fprintf(OutFile->FilePtr, " Soil.Qnet Soil.Qs Soil.Qe Soil.Qg Soil.Qst Ra ");
+    fprintf(OutFile->FilePtr, " Snow.Qsw Snow.Qlw Snow.Qs Snow.Qe Snow.Qp Snow.MeltEnergy ");
+	if (TotNumGap > 0)
+	  fprintf(OutFile->FilePtr, " Gap.SWE Gap.Qsw Gap.Qlin Gap.Qlw Gap.Qs Gap.Qe Gap.Qp Gap.MeltEnergy ");
+    fprintf(OutFile->FilePtr, " Tair ");
     if (Options->Infiltration == DYNAMIC)
       fprintf(OutFile->FilePtr, " InfiltAcc");
+
+    if (flag == 2)
+      if (Veg->Gapping == 1)
+        fprintf(OutFile->FilePtr, "Gap_SW GAP_LW");
 
     fprintf(OutFile->FilePtr, "\n");
 
@@ -1149,41 +1166,65 @@ void DumpPix(DATE *Current, int first, FILES *OutFile, EVAPPIX *Evap,
 
   fprintf(OutFile->FilePtr, " %g", Evap->ETot);
 
+  /* Potential transpiration */
   for (i = 0; i < NCanopyStory + 1; i++)
-    fprintf(OutFile->FilePtr, " %g", Evap->EPot[i]);           /* Potential transpiration */
+    fprintf(OutFile->FilePtr, " %g", Evap->EPot[i]);          
+  /* Actual transpiration */
   for (i = 0; i < NCanopyStory + 1; i++)
-    fprintf(OutFile->FilePtr, " %g", Evap->EAct[i]);           /* Actual transpiration */
+    fprintf(OutFile->FilePtr, " %g", Evap->EAct[i]);           
   for (i = 0; i < NCanopyStory; i++)
     fprintf(OutFile->FilePtr, " %g", Evap->EInt[i]);
+  /* transpiration from each veg layer from each soil layer */
   for (i = 0; i < NCanopyStory; i++)
     for (j = 0; j < NSoil; j++)
-      fprintf(OutFile->FilePtr, " %g", Evap->ESoil[i][j]);    /* transpiration from each veg layer from each soil layer */
-  fprintf(OutFile->FilePtr, " %g", Evap->EvapSoil);           /* evaporation from uppper soil */
+      fprintf(OutFile->FilePtr, " %g", Evap->ESoil[i][j]);    
+  /* evaporation from uppper soil */
+  fprintf(OutFile->FilePtr, " %g", Evap->EvapSoil);           
 
   for (i = 0; i < NCanopyStory; i++)
     fprintf(OutFile->FilePtr, " %g", Precip->IntRain[i]);
   for (i = 0; i < NCanopyStory; i++)
     fprintf(OutFile->FilePtr, " %g", Precip->IntSnow[i]);
 
-
-  for (i = 0; i < NSoil; i++)
+  for (i = 0; i <= NSoil; i++)
     fprintf(OutFile->FilePtr, " %g ", Soil->Moist[i]);
   for (i = 0; i < NSoil; i++)
     fprintf(OutFile->FilePtr, " %g ", Soil->Perc[i]);
 
-  fprintf(OutFile->FilePtr, " %g %g %g ", Soil->TableDepth, Soil->SatFlow, Soil->DetentionStorage);
-
-  for (i = 0; i < NCanopyStory; i++)
+  fprintf(OutFile->FilePtr, " %g %g %g ", Soil->TableDepth, 
+	Soil->SatFlow, Soil->DetentionStorage);
+ 
+  for (i = 0; i <= NCanopyStory; i++) {
     fprintf(OutFile->FilePtr, " %g ", Rad->NetShort[i]);
+  }
+
+  for (i = 0; i <= NCanopyStory; i++) {
+    fprintf(OutFile->FilePtr, " %g ", Rad->LongIn[i]);
+  }
 
   fprintf(OutFile->FilePtr, " %g ", Rad->PixelNetShort);
 
   if (Options->HeatFlux)
     fprintf(OutFile->FilePtr, " %g ", Soil->TSurf);
 
-  fprintf(OutFile->FilePtr, " %g %g %g %g %g %g ", Soil->Qnet, Soil->Qs, Soil->Qe, Soil->Qg, Soil->Qst, Soil->Ra);
+  fprintf(OutFile->FilePtr, " %g %g %g %g %g %g ", 
+	Soil->Qnet, Soil->Qs, Soil->Qe, Soil->Qg, Soil->Qst, Soil->Ra);
+  fprintf(OutFile->FilePtr, " %g %g %g %g %g %g ", 
+	Snow->Qsw, Snow->Qlw, Snow->Qs, Snow->Qe, Snow->Qp, Snow->MeltEnergy);
+  if (TotNumGap > 0)
+	fprintf(OutFile->FilePtr, " %g %g %g %g %g %g %g %g ", Veg->Type[Opening].Swq,
+	  Veg->Type[Opening].Qsw, Veg->Type[Opening].Qlin, Veg->Type[Opening].Qlw, Veg->Type[Opening].Qs,
+	  Veg->Type[Opening].Qe, Veg->Type[Opening].Qp, Veg->Type[Opening].MeltEnergy);
+
+  fprintf(OutFile->FilePtr, " %g ", Rad->Tair);
 
   if (Options->Infiltration == DYNAMIC)
     fprintf(OutFile->FilePtr, " %g", Soil->InfiltAcc);
+
+  /* Only report the gap radiations values when dumping pixels instead of basin average */
+  if (flag == 2)
+    if (Veg->Gapping == 1)
+      fprintf(OutFile->FilePtr, " %g %g", 
+		Veg->Type[Opening].NetShort[1], Veg->Type[Opening].LongIn[1]);
 
 }

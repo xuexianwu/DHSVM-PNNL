@@ -116,8 +116,8 @@ enum KEYS {
   infiltration, interpolation, mm5, qpf, prism, grid, decimal, canopy_radatt,
   shading, snotel, outside, rhoverride, precipitation_source, wind_source, 
   temp_lapse, precip_lapse, cressman_radius, cressman_stations, prism_data_path, 
-  prism_data_ext, shading_data_path, shading_data_ext, 
-  skyview_data_path, stream_temp, canopy_shading, improv_radiation, gapping,
+  prism_data_ext, shading_data_path, shading_data_ext, skyview_data_path, 
+  stream_temp, canopy_shading, improv_radiation, gapping, snowslide,
   /* Area */
   coordinate_system, extreme_north, extreme_west, center_latitude,
   center_longitude, time_zone_meridian, number_of_rows,
@@ -129,7 +129,8 @@ enum KEYS {
   snow_water_capacity, reference_height, rain_lai_multiplier,
   snow_lai_multiplier, min_intercepted_snow, outside_basin,
   temp_lapse_rate, precip_lapse_rate, precip_multiplier, alb_acc_lambda, 
-  alb_melt_lambda, alb_acc_min, alb_melt_min,
+  alb_melt_lambda, alb_acc_min, alb_melt_min, snowslide_parameter1,
+  snowslide_parameter2, gapview_adj, gapwind_adj,
   /* Station information */
   station_name = 0, station_north, station_east, station_elev, station_file,
   /* RADAR information */
@@ -151,7 +152,7 @@ enum KEYS {
   wilting_point, bulk_density, vertical_ks, solids_thermal, residual, thermal_capacity,
   /* Vegetation information */
   veg_description = 0, overstory, understory, fraction, hemifraction, trunk_space,
-  aerodynamic_att, beam_attn, clumping_factor, leaf_angle_a, leaf_angle_b,
+  aerodynamic_att, beam_attn, diff_attn, clumping_factor, leaf_angle_a, leaf_angle_b,
   scat, snow_int_cap, mass_drip_ratio, snow_int_eff, imperv_frac, detention_frac, 
   detention_decay, height, gap_diam, max_resistance, min_resistance, 
   moisture_threshold, vpd, rpc, number_of_root_zones, root_zone_depth, overstory_fraction, 

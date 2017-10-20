@@ -27,19 +27,17 @@
   Allocates memory for the structure that will hold basin total and/or basin 
   average values
 *****************************************************************************/
-void InitAggregated(int MaxVegLayers, int MaxSoilLayers, AGGREGATED * Total)
+void InitAggregated(OPTIONSTRUCT *Options, int MaxVegLayers, int MaxSoilLayers, 
+  AGGREGATED *Total)
 {
   int i;			/* counter */
 
   if (!(Total->Evap.EPot = (float *) calloc(MaxVegLayers + 1, sizeof(float))))
     ReportError("InitAggregated()", 1);
-
   if (!(Total->Evap.EAct = (float *) calloc(MaxVegLayers + 1, sizeof(float))))
     ReportError("InitAggregated()", 1);
-
   if (!(Total->Evap.EInt = (float *) calloc(MaxVegLayers, sizeof(float))))
     ReportError("InitAggregated()", 1);
-
   if (!(Total->Evap.ESoil = (float **) calloc(MaxVegLayers, sizeof(float *))))
     ReportError("InitAggregated()", 1);
 
@@ -51,16 +49,33 @@ void InitAggregated(int MaxVegLayers, int MaxSoilLayers, AGGREGATED * Total)
 
   if (!(Total->Precip.IntRain = (float *) calloc(MaxVegLayers, sizeof(float))))
     ReportError("InitAggregated()", 1);
-
   if (!(Total->Precip.IntSnow = (float *) calloc(MaxVegLayers, sizeof(float))))
     ReportError("InitAggregated()", 1);
-
   if (!(Total->Soil.Moist = (float *) calloc(MaxSoilLayers + 1, sizeof(float))))
     ReportError("InitAggregated()", 1);
-
   if (!(Total->Soil.Perc = (float *) calloc(MaxSoilLayers, sizeof(float))))
     ReportError("InitAggregated()", 1);
-
   if (!(Total->Soil.Temp = (float *) calloc(MaxSoilLayers, sizeof(float))))
     ReportError("InitAggregated()", 1);
+
+  if (Options->CanopyGapping) {
+	if (!(Total->Veg.Type = (CanopyGapStruct *)calloc(2, sizeof(CanopyGapStruct))))
+	  ReportError("InitAggregated()", 1);
+	for (i = 0; i < CELL_PARTITION; i++) {
+	  if (!(Total->Veg.Type[i].EPot = (float *)calloc(MaxVegLayers + 1, sizeof(float))))
+		ReportError("InitAggregated()", 1);
+	  if (!(Total->Veg.Type[i].EAct = (float *)calloc(MaxVegLayers + 1, sizeof(float))))
+		ReportError("InitAggregated()", 1);
+	  if (!(Total->Veg.Type[i].EInt = (float *)calloc(MaxVegLayers, sizeof(float))))
+		ReportError("InitAggregated()", 1);
+	  if (!(Total->Veg.Type[i].ESoil = (float **)calloc(MaxVegLayers, sizeof(float *))))
+		ReportError("InitAggregated()", 1);
+	  if (!(Total->Veg.Type[i].IntRain = (float *)calloc(MaxVegLayers, sizeof(float))))
+		ReportError("InitAggregated()", 1);
+	  if (!(Total->Veg.Type[i].IntSnow = (float *)calloc(MaxVegLayers, sizeof(float))))
+		ReportError("InitAggregated()", 1);
+	  if (!(Total->Veg.Type[i].Moist = (float *)calloc(MaxSoilLayers + 1, sizeof(float))))
+		ReportError("InitAggregated()", 1);
+	}
+  }
 }

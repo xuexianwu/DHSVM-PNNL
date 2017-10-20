@@ -64,12 +64,14 @@ float CalcTransmissivity(float SoilDepth, float WaterTable, float LateralKs,
 {
   float Transmissivity;		/* Transmissivity (m^2/s) */
   float TransThresh;
+  float junk;
 
   if (fequal(KsExponent, 0.0))
     Transmissivity = LateralKs * (SoilDepth - WaterTable);
   else {
 	/* a smaller value of WaterTable variables indicates a higher actual water table depth */
 	if (WaterTable < DepthThresh) {
+      junk = exp(-KsExponent * WaterTable) - exp(-KsExponent * SoilDepth);
 	  Transmissivity = (LateralKs / KsExponent) * (exp(-KsExponent * WaterTable) - exp(-KsExponent * SoilDepth));
 	}
     else  {

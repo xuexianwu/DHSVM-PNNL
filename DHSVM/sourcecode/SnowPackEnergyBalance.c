@@ -67,6 +67,7 @@ float SnowPackEnergyBalance(float TSurf, va_list ap)
   float SweSurfaceLayer;/* Snow water equivalent in surface layer (m) */
   float SurfaceLiquidWater;	/* Liquid water in the surface layer (m) */
   float OldTSurf;		    /* Surface temperature during previous time step */
+
   float *RefreezeEnergy;	/* Refreeze energy (W/m2) */
   float *VaporMassFlux;		/* Mass flux of water vapor to or from the intercepted snow */
 
@@ -187,4 +188,6 @@ float SnowPackEnergyBalance(float TSurf, va_list ap)
   }
 
   return RestTerm;
+  
+
 }

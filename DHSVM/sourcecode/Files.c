@@ -91,7 +91,7 @@ int ScanFloats(FILE * FilePtr, float *X, int N)
   int Ctr;
 
   for (Ctr = 0; Ctr < N; Ctr++) {
-    if (fscanf(FilePtr, "%f", &X[Ctr]) != 1)
+    if (fscanf(FilePtr, "%f%*c", &X[Ctr]) != 1)
       break;
   }
 

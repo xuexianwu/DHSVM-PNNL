@@ -36,7 +36,8 @@
   The aggregated values are set to zero in the function RestAggregate,
   which is executed at the beginning of each time step.
 *****************************************************************************/
-void MassBalance(DATE *Current, DATE *Start, FILES *Out, AGGREGATED *Total, WATERBALANCE *Mass)
+void MassBalance(DATE *Current, DATE *Start, FILES *Out, AGGREGATED *Total, 
+  WATERBALANCE *Mass)
 {
   float NewWaterStorage;	/* water storage at the end of the time step */
   float Output;			/* total water flux leaving the basin;  */
@@ -79,16 +80,18 @@ void MassBalance(DATE *Current, DATE *Start, FILES *Out, AGGREGATED *Total, WATE
     fprintf(Out->FilePtr, " SatFlow ");
     fprintf(Out->FilePtr, " SnowVaporFlux ");
     fprintf(Out->FilePtr, " ChannelInt RoadInt CulvertInt"),
-    fprintf(Out->FilePtr, " PixelShortIn PixelNetShort NetShort.Layer1 NetShort.Layer2 PixelNetRadiation Tair Error");
+    fprintf(Out->FilePtr, " PixelShortIn PixelNetShort NetShort.Layer1 NetShort.Layer2 LongIn.Layer1 LongIn.Layer2 PixelNetRadiation Tair Error");
     fprintf(Out->FilePtr, "\n");
   }
   PrintDate(Current, Out->FilePtr);
   fprintf(Out->FilePtr, " %g  %g  %g  %g  %g  %g  %g  %g  %g  %g \
-      %g  %g  %g  %g  %g  %g  %g  %g %g  %g \n", 
+      %g  %g  %g  %g  %g  %g  %g  %g  %g  %g %g  %g\n", 
       Total->Precip.Precip, Total->Precip.SnowFall, Total->Soil.IExcess,
       Total->Snow.Swq, Total->Snow.Melt, Total->Evap.ETot, 
       Total->CanopyWater, Total->SoilWater, Total->Soil.SatFlow, Total->Snow.VaporMassFlux,
 	  Total->ChannelInt,  Total->RoadInt, Total->CulvertToChannel, 
-      Total->Rad.BeamIn+Total->Rad.DiffuseIn, Total->Rad.PixelNetShort, 
-      Total->Rad.NetShort[0], Total->Rad.NetShort[1], Total->NetRad, Total->Rad.Tair, MassError);
+      Total->Rad.BeamIn+Total->Rad.DiffuseIn, Total->Rad.PixelNetShort, Total->Rad.NetShort[0], 
+      Total->Rad.NetShort[1], Total->Rad.LongIn[0], Total->Rad.LongIn[1], Total->NetRad, 
+      Total->Rad.Tair, MassError);
+
 }

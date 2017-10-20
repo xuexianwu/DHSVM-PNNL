@@ -241,6 +241,7 @@ typedef struct {
   int CanopyShading;
   int ImprovRadiation;          /* if TRUE then improved radiation scheme is on */
   int CanopyGapping;            /* if canopy gapping is on */
+  int SnowSlide;                /* if snow sliding option is true */
   char PrismDataPath[BUFSIZE + 1];
   char PrismDataExt[BUFSIZE + 1];
   char ShadingDataPath[BUFSIZE + 1];
@@ -345,6 +346,12 @@ typedef struct {
                                A negataive value indicates flux from snow -- sublimiation */
   float CanopyVaporMassFlux;/* Vapor mass flux to/from intercepted snow in the canopy (m/timestep) */
   float Glacier;		    /* Amount of snow added to glacier during simulation */
+  float Qsw;                /* Net shortwave radiation exchange at surface */
+  float Qlw;                /* Net longwave radiation exchange at surface */
+  float Qs;				    /* Sensible heat exchange */
+  float Qe;				    /* Latent heat exchange */
+  float Qp;                 /* advected heat from rain input */
+  float MeltEnergy;			/* Energy used to melt snow and change of cold content of snow pack */
 } SNOWPIX;
 
 typedef struct {
@@ -470,11 +477,18 @@ typedef struct
                                    A negataive value indicates flux from snow -- sublimiation */
   float *Moist;			        /* Soil moisture content in layers (0-1) */
   float EvapSoil;		        /* Evaporation from the upper soil layer */
-  float ETot;			/* Total amount of evapotranspiration */
-  float *EPot;			/* Potential transpiration from each vegetation/soil layer */
-  float *EAct;			/* Actual transpiration from each vegetation soil layer */
-  float *EInt;			/* Evaporation from interception for each vegetation layer */
-  float **ESoil;		/* Transpiration for each vegetation layer from each soil zone */
+  float ETot;			        /* Total amount of evapotranspiration */
+  float *EPot;			        /* Potential transpiration from each vegetation/soil layer */
+  float *EAct;			        /* Actual transpiration from each vegetation soil layer */
+  float *EInt;			        /* Evaporation from interception for each vegetation layer */
+  float **ESoil;		        /* Transpiration for each vegetation layer from each soil zone */
+  float GapView;                /* skyview ration from gap to sky */
+  float Qsw;                    /* Net shortwave radiation exchange at surface */
+  float Qlin;                   /* Incoming longwave radiation */
+  float Qlw;                    /* Net longwave radiation exchange at surface */
+  float Qs;				        /* Sensible heat exchange */
+  float Qe;				        /* Latent heat exchange */
+  float Qp;                     /* advected heat from rain input */
 } CanopyGapStruct;
 
 typedef struct {
@@ -517,8 +531,6 @@ typedef struct {
 					    for canopy attenuation of shortwave radiation 
 						taken after Chen and Black, 1991 */
   float Taud;			/* Transmission of Diffuse radiation through canopy */
-						/* a function of the following two parameters and
-						effective LAI (which can change monthly) */
   float LeafAngleA;		/* parameter describing the Leaf Angle Distribution */
   float LeafAngleB;		/* parameter describing the leaf Angle Distribution */
   float Scat;			/* scattering parameter (between 0.7 and 0.85) */
@@ -579,6 +591,7 @@ typedef struct {
   ROADSTRUCT Road;
   SNOWPIX Snow;
   SOILPIX Soil;
+  VEGPIX Veg;
   float NetRad;
   float SoilWater;
   float CanopyWater;

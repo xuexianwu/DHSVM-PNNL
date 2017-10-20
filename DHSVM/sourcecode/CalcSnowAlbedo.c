@@ -25,7 +25,7 @@
 /*****************************************************************************
   CalcSnowAlbedo()
 *****************************************************************************/
-float CalcSnowAlbedo(float TSurf, unsigned short Last, SNOWTABLE * SnowAlbedo)
+float CalcSnowAlbedo(float TSurf, unsigned short Last, SNOWTABLE *SnowAlbedo)
 {
   if (Last > (unsigned short) DAYPYEAR)
     Last = (unsigned short) DAYPYEAR;

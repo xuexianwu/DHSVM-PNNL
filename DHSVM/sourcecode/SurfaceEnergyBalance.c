@@ -122,11 +122,9 @@ float SurfaceEnergyBalance(float TSurf, va_list ap)
 
   /* In this routine transport of energy to the surface is considered 
      positive */
-
   TMean = 0.5 * (OldTSurf + TSurf);
 
   /* Apply the stability correction to the aerodynamic resistance */
-
   if (Wind > 0.0)
     Ra /= StabilityCorrection(Z, Displacement, TMean, Tair, Wind, Z0);
   else

@@ -90,8 +90,10 @@ int Read2DMatrixBin(char *FileName, void *Matrix, int NumberType, int NY,
   if (fseek(InFile, OffSet, SEEK_SET))
     ReportError(FileName, 39);
   NElements = fread(Matrix, ElemSize, NY * NX, InFile);
-  if (NElements != NY * NX)
+  if (NElements != NY * NX) {
+    printf("%d elements out of %d\n", NElements, NY*NX);
     ReportError(FileName, 2);
+  }
 
   fclose(InFile);
 

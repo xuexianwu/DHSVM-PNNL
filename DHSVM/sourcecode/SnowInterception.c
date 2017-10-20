@@ -213,10 +213,10 @@ void SnowInterception(OPTIONSTRUCT *Options, int y, int x, int Dt, float F,
   small canopy gaps. This assumption is valid for the typical DHSVM implmentation on the
   spatial scale of 30-150 m. As such,  F is not needed for weighting radiation  */
   if (Options->ImprovRadiation) {
-    NetRadiation = LocalRad->NetShort[0] + LocalRad->LongIn[0] - 2 * Vf * LongOut;
+    NetRadiation = LocalRad->NetShort[0] + LocalRad->LongIn[0]-2*Vf*LongOut;
   }
   else {
-    NetRadiation = LocalRad->NetShort[0] + LocalRad->LongIn[0] - 2 * F * LongOut;
+    NetRadiation = LocalRad->NetShort[0] + LocalRad->LongIn[0]-2*F*LongOut;
     NetRadiation /= F;
   }
 

@@ -47,9 +47,7 @@ void CheckOut(OPTIONSTRUCT *Options, LAYER Veg, LAYER Soil, VEGTABLE *VType, SOI
           printf("veg value %d out of range \n", VegMap[y][x].Veg);
           exit(-1);
         }
-
         count[VegMap[y][x].Veg - 1]++;
-
         if (SoilMap[y][x].Soil < 1 || SoilMap[y][x].Soil > Soil.NTypes) {
           printf("soil value %d out of range \n", SoilMap[y][x].Soil);
           exit(-1);

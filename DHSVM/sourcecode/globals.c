@@ -35,3 +35,9 @@ float ALB_ACC_MIN;
 float ALB_MELT_MIN;
 
 int GRID_DECIMAL;       /* Number of digits after decimal point in forcing file names */
+float GAPWIND_FACTOR;     
+float GAPVIEW_FACTOR;
+int TotNumGap;          /* total number of grid cells with a gap structure */
+
+float SNOWSLIDE1;               /*Avalanche parameter*/
+float SNOWSLIDE2;               /*Avalanche parameter */

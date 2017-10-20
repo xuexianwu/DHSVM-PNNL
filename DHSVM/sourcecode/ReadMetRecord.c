@@ -55,8 +55,9 @@ void ReadMetRecord(OPTIONSTRUCT *Options, DATE *Current, int NSoilLayers,
   if (IsWindModelLocation)
     NMetVars++;
 
-  if (!ScanDate(InFile->FilePtr, &MetDate))
-    ReportError(InFile->FileName, 23);
+  if (!ScanDate(InFile->FilePtr, &MetDate)) {
+     ReportError(InFile->FileName, 23);
+  }
 
   while (!IsEqualTime(&MetDate, Current) && !feof(InFile->FilePtr)) {
     if (ScanFloats(InFile->FilePtr, Array, NMetVars) != NMetVars)

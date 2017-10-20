@@ -305,8 +305,8 @@ void InitVegMap(OPTIONSTRUCT *Options, LISTPTR Input, MAPSIZE *Map,
   int x;			/* counter */
   int y;			/* counter */
   int flag;
-  int NumberType;		/* number type */
-  unsigned char *Type;		/* Vegetation type */
+  int NumberType;	/* number type */
+  uchar *Type;		/* Vegetation type */
 
 
   /* Get the map filename from the [VEGETATION] section */
@@ -318,7 +318,7 @@ void InitVegMap(OPTIONSTRUCT *Options, LISTPTR Input, MAPSIZE *Map,
   /* Read the vegetation type */
   GetVarName(005, 0, VarName);
   GetVarNumberType(005, &NumberType);
-  if (!(Type = (unsigned char *)calloc(Map->NX * Map->NY,
+  if (!(Type = (uchar *)calloc(Map->NX * Map->NY,
     SizeOfNumberType(NumberType))))
     ReportError((char *)Routine, 1);
   flag = Read2DMatrix(VegMapFileName, Type, NumberType, Map->NY, Map->NX, 0, VarName, 0);
@@ -408,7 +408,7 @@ void InitCanopyGapMap(OPTIONSTRUCT *Options, LISTPTR Input, MAPSIZE *Map,
         if (VType[(*VegMap)[y][x].Veg - 1].OverStory == FALSE)
           (*VegMap)[y][x].Gapping = 0;
         /* set gapping to false given glacier cell */
-        if (VType[(*VegMap)[y][x].Veg - 1].Index = GLACIER)
+        if (VType[(*VegMap)[y][x].Veg - 1].Index == GLACIER)
           (*VegMap)[y][x].Gapping = 0;
       }
     }
@@ -419,30 +419,22 @@ void InitCanopyGapMap(OPTIONSTRUCT *Options, LISTPTR Input, MAPSIZE *Map,
     for (x = 0; x < Map->NX; x++) {
       NVeg = Veg->MaxLayers;
       NSoil = Soil->MaxLayers;
-      if ((*VegMap)[y][x].Gapping) {
-        
+      if (Options->CanopyGapping) {
         if (!((*VegMap)[y][x].Type = (CanopyGapStruct *)calloc(2, sizeof(CanopyGapStruct))))
           ReportError((char *)Routine, 1);
-
         for (i = 0; i < CELL_PARTITION; i++) {
           if (!((*VegMap)[y][x].Type[i].IntRain = (float *)calloc(NVeg, sizeof(float))))
             ReportError((char *)Routine, 1);
-
           if (!((*VegMap)[y][x].Type[i].IntSnow = (float *)calloc(NVeg, sizeof(float))))
             ReportError((char *)Routine, 1);
-
           if (!((*VegMap)[y][x].Type[i].Moist = (float *)calloc(NSoil+1, sizeof(float))))
             ReportError((char *)Routine, 1);
-
           if (!((*VegMap)[y][x].Type[i].EPot = (float *)calloc(NVeg+1, sizeof(float))))
             ReportError((char *)Routine, 1);
-
           if (!((*VegMap)[y][x].Type[i].EAct = (float *)calloc(NVeg+1, sizeof(float))))
             ReportError((char *)Routine, 1);
-
           if (!((*VegMap)[y][x].Type[i].EInt = (float *)calloc(NVeg, sizeof(float))))
             ReportError((char *)Routine, 1);
-
           if (!((*VegMap)[y][x].Type[i].ESoil = (float **)calloc(NVeg, sizeof(float *))))
             ReportError((char *)Routine, 1);
 

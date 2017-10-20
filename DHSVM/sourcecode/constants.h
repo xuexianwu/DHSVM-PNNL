@@ -54,7 +54,7 @@
 #define VON_KARMAN  0.4		    /* Von Karman's constant */
 #define WATER_DENSITY 1000.		/* Density of water in kg/m3 */
 #define Z0_MULTIPLIER 0.13		/* Multiplier for vegetation height to get roughness length (m) */
-#define MinDiff   (1.e-8)
+#define MinDiff   (1.e-5)
 
 /**************** extern constants - see globals.c ****************/
 
@@ -84,5 +84,11 @@ extern float ALB_ACC_MIN;
 extern float ALB_MELT_MIN;
 
 extern int GRID_DECIMAL;               /* Number of digits after decimal point in forcing file names */
+extern float GAPVIEW_FACTOR;
+extern float GAPWIND_FACTOR;
 
+extern int TotNumGap;                  /* total number of grid cells with a gap structure */
+
+extern float SNOWSLIDE1;               /* First Parameter in Snowslide equation */
+extern float SNOWSLIDE2;               /* Second Parameter in Snowslide equation */
 #endif
