@@ -229,7 +229,6 @@ void UnsaturatedFlow(int Dt, int y, int x, float DX, float DY, float Infiltratio
 
   if (*TableDepth < 0.0) {
     *Runoff += -(*TableDepth);
-    printf("[%d][%d] Table Depth=%.2f\n", y, x, *TableDepth);
     if (InfiltOption == DYNAMIC) {
       if (Infiltration > -(*TableDepth))
         Infiltration += *TableDepth;
